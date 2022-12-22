@@ -1,39 +1,54 @@
 Bootstrap: docker
 From: ubuntu:18.04
 
-%files
-  # copy the software bundle into the container at /opt
-  ./bundle/* /opt
-
 %post
   # basic update and prerequisites
   apt-get -y update
   apt-get -y install \
     build-essential \
     libssl-dev \
-    cmake
+    cmake wget
 
-  # install SWIG 
-  cd /opt/swig-4.0.2
-  ./configure --without-pcre
-  make
-  make install
+  # download miniconda
+  cd /opt
+  wget https://repo.anaconda.com/miniconda/Miniconda3-py38_4.12.0-Linux-x86_64.sh
 
-  # install miniconda
+  # install conda
   cd /opt
   bash Miniconda3-py38_4.12.0-Linux-x86_64.sh -bfp /opt/miniconda3
 
+  # download swig
+  cd /opt 
+  wget https://sourceforge.net/projects/swig/files/swig/swig-4.0.2/swig-4.0.2.tar.gz
+  tar -xvzf swig-4.0.2.tar.gz
+  rm swig-4.0.2.tar.gz
+
+  # install swig
+  cd /opt/swig-4.0.2
+  ./configure --without-pcre 
+  make 
+  make install
+  cd /opt
+  rm -rf ./swig-4.0.2
+
+  # download texgen 
+  cd /opt 
+  wget https://github.com/louisepb/TexGen/archive/refs/tags/v3.11.0.tar.gz
+  tar -xvzf v3.11.0.tar.gz
+  rm v3.11.0.tar.gz
+  
   # install texgen
   cd /opt/TexGen-3.11.0
-  mkdir bin 
+  mkdir -p bin 
   cd bin 
-
-  cmake \
-  -DPYTHON_SITEPACKAGES_DIR=/opt/miniconda3/lib/python3.8/site-packages \
+  cmake .. \
+  -DPYTHON_INCLUDE_PATH=/opt/miniconda3/include/python3.8 \
   -DPYTHON_INCLUDE_DIR=/opt/miniconda3/include/python3.8 \
   -DPYTHON_LIBRARY=/opt/miniconda3/lib/libpython3.8.so \
-  ..
-  make -j4
+  -DPYTHON_SITEPACKAGES_DIR=/opt/miniconda3/lib/python3.8/site-packages \
+  -DBUILD_RENDERER=OFF \
+  -DBUILD_GUI=OFF
+  make -j 4
   make install
 
 %runscript

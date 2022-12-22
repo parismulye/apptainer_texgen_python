@@ -1,53 +1,67 @@
-## Prerequisites for containers
-Need to have the singularity/apptainer (both are same now). 
+## Overview
+
+This is a container for making a ```TexGen-11.0``` and ```python3.8``` environment. So the container can take a python script (that can use TexGen libraries and functions) as an input and produces the output.  
+
+## Table of Contents
+1. How to install Apptainer
+2. How to build the container
+3. How to run the container to execute various commands of TexGen and Python
+4. How to convert back and forth between the ```.sif``` and ```.simg``` format
+5. Some limitations
+
+## 1. How to install Apptainer/Singularity (Linux/Mac/Windows)
+Follow the instructions here based on your operating system.
 
 https://docs.sylabs.io/guides/3.0/user-guide/installation.html
 
-## Software dependencies
-In this case, the software dependencies are downloaded into local storage to avoid repeatitive downloading every time the container is built.
 
-**SWIG-4.0.2** 
+## 2. How to build the container
+The basic mode creates a single container file in binary (```.sif```) after building. The definition file (```.def```) contains the script to build this container. 
 
-https://sourceforge.net/projects/swig/files/swig/swig-4.0.2/swig-4.0.2.tar.gz/download
-
-**TexGen-3.11.0**
-
-https://github.com/louisepb/TexGen/archive/refs/tags/3.11.0.zip
-
-**Miniconda3: (Python3.8)**
-
-https://repo.anaconda.com/miniconda/Miniconda3-py38_4.12.0-Linux-x86_64.sh 
-
-## Building the container
-
-There are two modes that you can build into
-(1) Sandbox mode : creates the folders that you can navigate/modify. For the initial testing. Ideal for debugging
-(2) Binary mode : creates a .sif file changes to which cannot be saved after the container is closed. Ideal for production
-
-The .def contains the script used to build this container
-
-## Sandbox mode 
-Build:
-```
-apptainer build --sandbox texgen_python_env.simg script_texgen_python.def
-```
-Run container shell after building:
-```
-apptainer shell --writable texgen_python_env.simg 
-```
-## Binary mode
-Build:
 ```
 apptainer build texgen_python_env.sif script_texgen_python.def
 ```
-Run container shell after building:
-```
-apptainer shell texgen_python_env.sif 
-```
 
-## Running the container
+## 3. How to run the container to execute various commands of TexGen and Python
 This container is set to run one command by default:
 A python environment capable of importing TexGen libraries 
 ```
 apptainer run texgen_python_env.sif [arg1] [arg2] ...
 ```
+
+### An example
+A sample file has been added to the ```tests``` folder. Go to that folder.
+```
+cd ./tests/single_yarn_voxel_abaqus/ 
+```
+Run the container with the python script inside this test folder.
+```
+apptainer run ../../texgen_python_env.sif simple.py
+```
+Once done, it will generate various files related to the abaqus model
+
+## 4. How to convert back and forth between the ```.sif``` and ```.simg``` format
+Often it is needed to switch between the sandbox mode (```.simg```) and the binary (```.sif```) mode for performing some tasks without rebuilding the whole container again.
+
+```.sif```: is a container which is compressed and cannot be opened directly and the changes made will be lost, also cannot install packages.
+
+```.simg```: is a container which basically creates a folder which can be navigated (it has the same structure as the linux machine). Easy to edit and test things, install things. But is it bulkier than the ```.sif``` container.
+
+### (a) Convert ```.sif``` to ```.simg```
+Feel free to change the names while converting to avoid overwriting.
+```
+apptainer build --sandbox texgen_python_env.simg texgen_python_env.sif
+apptainer shell --writable texgen_python_env.simg
+```
+
+### (a) Convert ```.simg``` to ```.sif```
+Feel free to change the names while converting to avoid overwriting.
+```
+apptainer build texgen_python_env.sif texgen_python_env.simg
+apptainer shell texgen_python_env.sif
+```
+
+## 5. Some limitations
+* Currently, the python that is used inside the container is ```python3.8``` whereas the recommended one for ```TexGen``` is ```python2.7```. However, there are some problems in making it work. So some functionalities might give errors.
+* Do not forget to add ```from TexGen.Core import *``` to the python code in order to use ```TexGen``` functionalities.
+
